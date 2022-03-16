@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { w3cwebsocket as W3CWebSocket } from "websocket";
+import React, { useEffect, useState } from "react";
+
+import Login from "./components/Login";
+import Room from "./components/Room";
 
 function App() {
   const [login, setLogin] = useState({
@@ -7,10 +9,42 @@ function App() {
     messages: [],
     value: "",
     name: "",
-    room: "test_room",
+    room: "testRoom",
   });
+  const [client, setClient] = useState({});
 
-  return <div className="container">{/* {login.isLoggedIn ?  :  } */}</div>;
+  useEffect(() => {
+    client.onopen = () => {
+      console.log("connected");
+    };
+
+    client.onmessage = (message) => {
+      const serverData = JSON.parse(message.data);
+
+      if (serverData) {
+        setLogin({
+          ...login,
+          messages: [
+            ...login.messages,
+            {
+              msg: serverData.message,
+              name: serverData.name,
+            },
+          ],
+        });
+      }
+    };
+  }, [client, login]);
+
+  return (
+    <main className="container">
+      {login.isLoggedIn ? (
+        <Room client={client} login={login} setLogin={setLogin} />
+      ) : (
+        <Login login={login} setLogin={setLogin} setClient={setClient} />
+      )}
+    </main>
+  );
 }
 
 export default App;
